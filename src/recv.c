@@ -1,16 +1,16 @@
 #include "ft_ping.h"
 
 static void collect_data(recv_t *response, struct msghdr *message) {
-        response->payload = (payload_t*)message->msg_iov[0].iov_base;
-        for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(message); cmsg != NULL; cmsg = CMSG_NXTHDR(message, cmsg)) {
-            if (cmsg->cmsg_level == SOL_IP) {
-                if (cmsg->cmsg_type == IP_TTL) {
-                    response->ttl = *(int*)CMSG_DATA(cmsg);
-                } else if (cmsg->cmsg_type == IP_RECVERR) {
-                    response->err = (struct sock_extended_err*)CMSG_DATA(cmsg);
-                }
+    response->payload = (payload_t*)message->msg_iov[0].iov_base;
+    for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(message); cmsg != NULL; cmsg = CMSG_NXTHDR(message, cmsg)) {
+        if (cmsg->cmsg_level == SOL_IP) {
+            if (cmsg->cmsg_type == IP_TTL) {
+                response->ttl = *(int*)CMSG_DATA(cmsg);
+            } else if (cmsg->cmsg_type == IP_RECVERR) {
+                response->err = (struct sock_extended_err*)CMSG_DATA(cmsg);
             }
         }
+    }
 }
 
 void reciever(ft_ping_t *ft_ping) {
@@ -35,6 +35,7 @@ void reciever(ft_ping_t *ft_ping) {
         message.msg_controllen = CONTROL_LEN;
         ssize_t rec = recvmsg(ft_ping->sock, &message, 0);
         if (rec < 0) {
+            ft_ping->packets_lost++;
             rec = recvmsg(ft_ping->sock, &message, MSG_ERRQUEUE);
             collect_data(&response, &message);
             char *err;
@@ -52,10 +53,18 @@ void reciever(ft_ping_t *ft_ping) {
                         break;
                 }
             } else if (response.err->ee_type == ICMP_TIME_EXCEEDED) {
-                err = "TTL exceeded";
+                switch (response.err->ee_code) {
+                    case ICMP_EXC_TTL:
+                        err = "TTL exceeded";
+                        break;
+                    case ICMP_EXC_FRAGTIME:
+                        err = "Fragment Reass time exceeded";
+                        break;
+                }
             }
             printf("From %s: icmp_seq=%d %s\n", ft_ping->name, response.payload->icmp.un.echo.sequence, err);
         } else {
+            ft_ping->packets_recv++;
             collect_data(&response, &message);
             gettimeofday(&now, NULL);
             float elapsed = (float)(now.tv_usec - response.payload->time.tv_usec) / 1000;
@@ -68,4 +77,3 @@ void reciever(ft_ping_t *ft_ping) {
         }
     }
 }
-

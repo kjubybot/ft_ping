@@ -15,7 +15,7 @@ void send_ping(int sig) {
     request.icmp.un.echo.sequence = ft_ping.seq;
     gettimeofday(&request.time, NULL);
     if (sendto(ft_ping.sock, &request, sizeof(request), 0, ft_ping.addr, ft_ping.addrlen) < 0) {
-        fputs("cannot send ping\n", stderr);
+        perror(PROG_NAME": sendto");
         exit(1);
     }
     alarm(1);
@@ -26,7 +26,7 @@ void terminate(int sig) {
     gettimeofday(&now, NULL);
     size_t elapsed = (now.tv_usec - ft_ping.start_time.tv_usec) / 1000;
     printf("\n0o0 %s ping statistics 0o0\n", ft_ping.name);
-    printf("%d packets transmitted, time %lu ms\n", ft_ping.packets, elapsed);
+    printf("%d packets transmitted, %d recieved, %d errors, time %lu ms\n", ft_ping.packets, ft_ping.packets_recv, ft_ping.packets_lost, elapsed);
     exit(0);
 }
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     if (getaddrinfo(argv[1], NULL, &hints, &addr)) {
-        fputs("error resolving", stderr);
+        perror(PROG_NAME);
         exit(1);
     }
 
@@ -59,20 +59,20 @@ int main(int argc, char **argv) {
 
     ft_ping.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (ft_ping.sock < 0) {
-        fputs("error creating socker", stderr);
+        perror(PROG_NAME": socket");
         exit(1);
     }
     int enable = 1;
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVERR, &enable, sizeof(enable))) {
-        fputs("cannot set sock opt", stderr);
+        perror(PROG_NAME": setsockopt");
         exit(1);
     }
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVOPTS, &enable, sizeof(enable))) {
-        fputs("cannot set sock opt\n", stderr);
+        perror(PROG_NAME": setsockopt");
         exit(1);
     }
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVTTL, &enable, sizeof(enable))) {
-        fputs("cannot set sock opt\n", stderr);
+        perror(PROG_NAME": setsockopt");
         exit(1);
     }
 
