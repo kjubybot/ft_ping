@@ -1,5 +1,6 @@
 #include "ft_ping.h"
 #include <stdio.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 
 ft_ping_t ft_ping;
@@ -18,7 +19,13 @@ void send_ping(int sig) {
         perror(PROG_NAME": sendto");
         exit(1);
     }
-    alarm(1);
+
+    if (ft_ping.opts.count != -1) {
+        ft_ping.opts.count--;
+    }
+    if (ft_ping.opts.count != 0) {
+        alarm(1);
+    }
 }
 
 void terminate(int sig) {
@@ -32,8 +39,17 @@ void terminate(int sig) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        fputs("put usage here", stderr);
+        fputs(USAGE, stderr);
         exit(1);
+    }
+
+    if (parse_opts(argv, &ft_ping.opts)) {
+        exit(1);
+    }
+
+    if (ft_ping.opts.help) {
+        puts(USAGE);
+        exit(0);
     }
 
     struct addrinfo *addr;
@@ -62,6 +78,7 @@ int main(int argc, char **argv) {
         perror(PROG_NAME": socket");
         exit(1);
     }
+
     int enable = 1;
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVERR, &enable, sizeof(enable))) {
         perror(PROG_NAME": setsockopt");
@@ -75,9 +92,13 @@ int main(int argc, char **argv) {
         perror(PROG_NAME": setsockopt");
         exit(1);
     }
+    if (setsockopt(ft_ping.sock, SOL_IP, IP_TTL, &ft_ping.opts.ttl, sizeof(ft_ping.opts.ttl))) {
+        perror(PROG_NAME": setsockopt");
+        exit(1);
+    }
 
     signal(SIGALRM, send_ping);
     signal(SIGINT, terminate);
-    alarm(1);
+    send_ping(0);
     reciever(&ft_ping);
 }

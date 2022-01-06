@@ -1,7 +1,7 @@
 NAME = ft_ping
 
 CC = gcc
-CFLAGS = -Iinclude/ -g
+CFLAGS = -Iinclude/ -MMD -g
 
 RM = rm -fr
 
@@ -10,7 +10,8 @@ OBJDIR = obj/
 
 OBJ = \
 	  main.o\
-	  recv.o
+	  recv.o\
+	  opts.o
 
 OBJ := $(addprefix $(OBJDIR),$(OBJ))
 
@@ -34,3 +35,5 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+-include obj/*.d

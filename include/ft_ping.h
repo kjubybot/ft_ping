@@ -1,6 +1,7 @@
 #ifndef FT_PING
 #define FT_PING
 
+#include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +16,21 @@
 
 #define IOV_LEN 192
 #define CONTROL_LEN 256
+
+#define DEFAULT_TTL 64
+#define DEFAULT_INTERVAL 1.0
+
 #define PROG_NAME "ft_ping"
+#define USAGE "Usage:\n" \
+                "ft_ping [options] address\n\n" \
+                "Valid options are:\n" \
+                "    -c N    send N packets and stop\n" \
+                "    -T      show timestamp\n" \
+                "    -h      show this help\n" \
+                "    -i N    set interval between packets to N seconds. Default is 1.0\n" \
+                "    -q      quiet mode, display only starting line and summary\n" \
+                "    -t N    set TTL. Default is 64\n" \
+                "    -v      verbose mode\n"
 
 typedef struct {
     int count;
@@ -53,5 +68,7 @@ typedef struct {
 } recv_t;
 
 void reciever(ft_ping_t *);
+int parse_opts(char **, opts_t *);
+void terminate(int);
 
 #endif
