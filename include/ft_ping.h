@@ -25,9 +25,8 @@
                 "ft_ping [options] address\n\n" \
                 "Valid options are:\n" \
                 "    -c N    send N packets and stop\n" \
-                "    -T      show timestamp\n" \
+                "    -D      show timestamp\n" \
                 "    -h      show this help\n" \
-                "    -i N    set interval between packets to N seconds. Default is 1.0\n" \
                 "    -q      quiet mode, display only starting line and summary\n" \
                 "    -t N    set TTL. Default is 64\n" \
                 "    -v      verbose mode\n"
@@ -36,7 +35,7 @@ typedef struct {
     int count;
     int timestamp;
     int help;
-    float interval;
+    struct timeval interval;
     int quiet;
     int ttl;
     int verbose;

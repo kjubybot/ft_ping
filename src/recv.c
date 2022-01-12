@@ -73,6 +73,9 @@ void reciever(ft_ping_t *ft_ping) {
                 collect_data(&response, &message);
                 gettimeofday(&now, NULL);
                 float elapsed = (float)(now.tv_usec - response.payload->time.tv_usec) / 1000;
+                if (ft_ping->opts.timestamp) {
+                    printf("[%lu.%lu] ", now.tv_sec, now.tv_usec);
+                }
                 printf("%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
                         rec,
                         ft_ping->name,

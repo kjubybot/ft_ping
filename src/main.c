@@ -1,6 +1,4 @@
 #include "ft_ping.h"
-#include <stdio.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 
 ft_ping_t ft_ping;
@@ -24,7 +22,10 @@ void send_ping(int sig) {
         ft_ping.opts.count--;
     }
     if (ft_ping.opts.count != 0) {
-        alarm(1);
+        struct itimerval interval = {0};
+        interval.it_value = ft_ping.opts.interval;
+        setitimer(0, &interval, 0);
+        /*alarm(1);*/
     }
 }
 
@@ -33,7 +34,12 @@ void terminate(int sig) {
     gettimeofday(&now, NULL);
     size_t elapsed = (now.tv_usec - ft_ping.start_time.tv_usec) / 1000;
     printf("\n0o0 %s ping statistics 0o0\n", ft_ping.name);
-    printf("%d packets transmitted, %d recieved, %d errors, time %lu ms\n", ft_ping.packets, ft_ping.packets_recv, ft_ping.packets_lost, elapsed);
+    printf("%d packets transmitted, %d recieved, %d errors, %d%% packet loss, time %lu ms\n",
+            ft_ping.packets,
+            ft_ping.packets_recv,
+            ft_ping.packets_lost,
+            100 - (ft_ping.packets_recv * 100) / ft_ping.packets,
+            elapsed);
     exit(0);
 }
 
@@ -71,34 +77,35 @@ int main(int argc, char **argv) {
             addr->ai_addr->sa_data[4],
             addr->ai_addr->sa_data[5]);
 
-    printf("FT_PING %s (%s) %lu bytes of data\n", argv[1], ft_ping.name, sizeof(payload_t));
-
     ft_ping.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (ft_ping.sock < 0) {
-        perror(PROG_NAME": socket");
+        perror(PROG_NAME": cannot create socket");
         exit(1);
     }
 
     int enable = 1;
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVERR, &enable, sizeof(enable))) {
-        perror(PROG_NAME": setsockopt");
+        perror(PROG_NAME": cannot set error recieving");
         exit(1);
     }
-    if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVOPTS, &enable, sizeof(enable))) {
-        perror(PROG_NAME": setsockopt");
-        exit(1);
-    }
+    /*if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVOPTS, &enable, sizeof(enable))) {*/
+        /*perror(PROG_NAME": setsockopt");*/
+        /*exit(1);*/
+    /*}*/
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVTTL, &enable, sizeof(enable))) {
-        perror(PROG_NAME": setsockopt");
+        perror(PROG_NAME": cannot set TTL recieving");
         exit(1);
     }
     if (setsockopt(ft_ping.sock, SOL_IP, IP_TTL, &ft_ping.opts.ttl, sizeof(ft_ping.opts.ttl))) {
-        perror(PROG_NAME": setsockopt");
+        perror(PROG_NAME": cannot set TTL");
         exit(1);
     }
 
     signal(SIGALRM, send_ping);
     signal(SIGINT, terminate);
+
+    printf("FT_PING %s (%s) %lu bytes of data\n", argv[1], ft_ping.name, sizeof(payload_t));
+
     send_ping(0);
     reciever(&ft_ping);
 }
