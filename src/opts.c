@@ -3,6 +3,10 @@
 #include <stdio.h>
 
 static int parse_arg_int(int *dest, char *s) {
+    if (s == 0) {
+        return -1;
+    }
+
     for (size_t i = 0; s[i]; i++) {
         if (!(isdigit(s[i]) || isspace(s[i]))) {
             return -1;
@@ -16,6 +20,10 @@ static int parse_arg_int(int *dest, char *s) {
 }
 
 static int parse_arg_interval(struct timeval *dest, char *s) {
+    if (s == 0) {
+        return -1;
+    }
+
     size_t dots = 0;
     for (size_t i = 0; s[i]; i++) {
         if (!(isdigit(s[i]) || isspace(s[i]) || s[i] == '.')) {

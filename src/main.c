@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
             addr->ai_addr->sa_data[5]);
     freeaddrinfo(addr);
 
-    ft_ping.sock = -1; //socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
+    ft_ping.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (ft_ping.sock < 0) {
         ft_ping.sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
         if (ft_ping.sock < 0) {

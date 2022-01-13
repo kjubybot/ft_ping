@@ -31,6 +31,7 @@
                 "    -c N    send N packets and stop\n" \
                 "    -D      show timestamp\n" \
                 "    -h      show this help\n" \
+                "    -i N    set interval in seconds. Default is 1.0\n" \
                 "    -q      quiet mode, display only starting line and summary\n" \
                 "    -t N    set TTL. Default is 64\n" \
                 "    -v      verbose mode\n"

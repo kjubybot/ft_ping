@@ -42,6 +42,13 @@ void reciever(ft_ping_t *ft_ping) {
 
         ssize_t rec = recvmsg(ft_ping->sock, &message, 0);
         if (addr.sin_addr.s_addr != ft_ping->addr.sin_addr.s_addr) {
+            if (ft_ping->opts.verbose) {
+                printf("Packet stopped at %d.%d.%d.%d\n",
+                        addr.sin_addr.s_addr & 0xff,
+                        (addr.sin_addr.s_addr >> 8) & 0xff,
+                        (addr.sin_addr.s_addr >> 16) & 0xff,
+                        (addr.sin_addr.s_addr >> 24) & 0xff);
+            }
             continue;
         }
         if (rec < 0)  {
@@ -95,7 +102,12 @@ void reciever(ft_ping_t *ft_ping) {
                             break;
                     }
                 }
-                printf("From %s: icmp_seq=%d %s\n", ft_ping->name, response.payload->icmp.un.echo.sequence, err);
+                printf("From %d.%d.%d.%d: icmp_seq=%d %s\n",
+                        addr.sin_addr.s_addr & 0xff,
+                        (addr.sin_addr.s_addr >> 8) & 0xff,
+                        (addr.sin_addr.s_addr >> 16) & 0xff,
+                        (addr.sin_addr.s_addr >> 24) & 0xff,
+                        response.payload->icmp.un.echo.sequence, err);
             }
         } else {
             ft_ping->packets_recv++;
@@ -110,9 +122,12 @@ void reciever(ft_ping_t *ft_ping) {
                 if (ft_ping->opts.is_raw) {
                     rec -= IP_HDR_LEN;
                 }
-                printf("%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
+                printf("%lu bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
                         rec,
-                        ft_ping->name,
+                        addr.sin_addr.s_addr & 0xff,
+                        (addr.sin_addr.s_addr >> 8) & 0xff,
+                        (addr.sin_addr.s_addr >> 16) & 0xff,
+                        (addr.sin_addr.s_addr >> 24) & 0xff,
                         response.payload->icmp.un.echo.sequence,
                         response.ttl,
                         elapsed);
