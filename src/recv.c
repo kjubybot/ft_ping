@@ -27,19 +27,24 @@ void reciever(ft_ping_t *ft_ping) {
     iov.iov_base = iov_base;
     iov.iov_len = IOV_LEN;
 
-    message.msg_name = &ft_ping->addr;
-    message.msg_namelen = ft_ping->addrlen;
-    message.msg_iov = &iov;
-    message.msg_iovlen = 1;
-    message.msg_control = aux;
-
     recv_t response;
     struct timeval now;
 
     while (1) {
+        struct sockaddr_in addr = ft_ping->addr;
+
+        message.msg_name = &addr;
+        message.msg_namelen = ft_ping->addrlen;
+        message.msg_iov = &iov;
+        message.msg_iovlen = 1;
+        message.msg_control = aux;
         message.msg_controllen = CONTROL_LEN;
+
         ssize_t rec = recvmsg(ft_ping->sock, &message, 0);
-        if (rec < 0) {
+        if (addr.sin_addr.s_addr != ft_ping->addr.sin_addr.s_addr) {
+            continue;
+        }
+        if (rec < 0)  {
             ft_ping->packets_lost++;
 
             if (ft_ping->opts.quiet != 1) {
@@ -54,6 +59,27 @@ void reciever(ft_ping_t *ft_ping) {
                             break;
                         case ICMP_HOST_UNREACH:
                             err = "Destination Host Unreachable";
+                            break;
+                        case ICMP_PROT_UNREACH:
+                            err = "Protocol unreachable";
+                            break;
+                        case ICMP_PORT_UNREACH:
+                            err = "Port unreachable";
+                            break;
+                        case ICMP_FRAG_NEEDED:
+                            err = "Fragmentation needed";
+                            break;
+                        case ICMP_SR_FAILED:
+                            err = "Source route failed";
+                            break;
+                        case ICMP_NET_UNKNOWN:
+                            err = "Network is unknown";
+                            break;
+                        case ICMP_HOST_UNKNOWN:
+                            err = "Host is unknown";
+                            break;
+                        case ICMP_HOST_ISOLATED:
+                            err = "Host isolated";
                             break;
                         case ICMP_PKT_FILTERED:
                             err = "Packet filtered";

@@ -1,7 +1,7 @@
 #include "ft_ping.h"
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/time.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 
 ft_ping_t ft_ping;
 
@@ -15,21 +15,20 @@ void send_ping(int sig) {
     memset(&request, 0, sizeof(request));
     request.icmp.type = ICMP_ECHO;
     request.icmp.un.echo.sequence = ft_ping.seq;
-    request.icmp.checksum = checksum(&request, sizeof(request));
     gettimeofday(&request.time, NULL);
+    request.icmp.checksum = checksum(&request, sizeof(request));
 
     if (ft_ping.opts.is_raw) {
-        payload_raw_t request_raw;
-        request_raw.data = request;
-        request_raw.ip = build_ip(sizeof(request_raw), ft_ping.opts.ttl, ft_ping.addr.sin_addr.s_addr);
+        struct iphdr ip = build_ip(PAYLOAD_SIZE + IP_HDR_LEN, ft_ping.opts.ttl, ft_ping.addr.sin_addr.s_addr);
+        char request_raw[PAYLOAD_SIZE + IP_HDR_LEN];
+        memcpy(request_raw, &ip, sizeof(ip));
+        memcpy(request_raw + IP_HDR_LEN, &request, sizeof(request));
 
         if (sendto(ft_ping.sock, &request_raw, sizeof(request_raw), 0, (struct sockaddr *)&ft_ping.addr, ft_ping.addrlen) < 0) {
             perror(PROG_NAME": sendto");
             exit(1);
         }
-    }
-
-    if (sendto(ft_ping.sock, &request, sizeof(request), 0, (struct sockaddr *)&ft_ping.addr, ft_ping.addrlen) < 0) {
+    } else if (sendto(ft_ping.sock, &request, sizeof(request), 0, (struct sockaddr *)&ft_ping.addr, ft_ping.addrlen) < 0) {
         perror(PROG_NAME": sendto");
         exit(1);
     }
@@ -95,7 +94,7 @@ int main(int argc, char **argv) {
             addr->ai_addr->sa_data[5]);
     freeaddrinfo(addr);
 
-    ft_ping.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
+    ft_ping.sock = -1; //socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (ft_ping.sock < 0) {
         ft_ping.sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
         if (ft_ping.sock < 0) {
@@ -114,7 +113,12 @@ int main(int argc, char **argv) {
         perror(PROG_NAME": cannot set TTL recieving");
         exit(1);
     }
-    if (setsockopt(ft_ping.sock, SOL_IP, IP_TTL, &ft_ping.opts.ttl, sizeof(ft_ping.opts.ttl))) {
+    if (ft_ping.opts.is_raw) {
+        if (setsockopt(ft_ping.sock, SOL_IP, IP_HDRINCL, &enable, sizeof(enable))) {
+            perror(PROG_NAME": cannot configure socket");
+            exit(1);
+        }
+    } else if (setsockopt(ft_ping.sock, SOL_IP, IP_TTL, &ft_ping.opts.ttl, sizeof(ft_ping.opts.ttl))) {
         perror(PROG_NAME": cannot set TTL");
         exit(1);
     }

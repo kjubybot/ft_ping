@@ -17,7 +17,9 @@
 
 #define IOV_LEN 192
 #define CONTROL_LEN 256
+
 #define IP_HDR_LEN 20
+#define PAYLOAD_SIZE 64
 
 #define DEFAULT_TTL 64
 #define DEFAULT_INTERVAL 1.0
@@ -62,11 +64,6 @@ typedef struct {
     struct timeval time;
     char padding[40];
 } payload_t;
-
-typedef struct {
-    struct iphdr ip;
-    payload_t data;
-} payload_raw_t;
 
 typedef struct {
     payload_t *payload;

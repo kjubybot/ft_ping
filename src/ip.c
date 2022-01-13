@@ -22,7 +22,7 @@ struct iphdr build_ip(size_t len, int ttl, in_addr_t addr) {
     res.version = 4;
     res.ihl = 5;
     res.tos = 0;
-    res.tot_len = len;
+    res.tot_len = htons(len);
     res.id = 0;
     res.frag_off = 0;
     res.ttl = ttl;
