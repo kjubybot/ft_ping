@@ -1,7 +1,7 @@
 NAME = ft_ping
 
 CC = gcc
-CFLAGS = -Iinclude/ -MMD -g
+CFLAGS = -Iinclude/ -MMD -g -fsanitize=address
 
 RM = rm -fr
 
@@ -11,7 +11,8 @@ OBJDIR = obj/
 OBJ = \
 	  main.o\
 	  recv.o\
-	  opts.o
+	  opts.o\
+	  ip.o
 
 OBJ := $(addprefix $(OBJDIR),$(OBJ))
 

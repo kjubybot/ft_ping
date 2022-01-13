@@ -1,7 +1,12 @@
 #include "ft_ping.h"
 
-static void collect_data(recv_t *response, struct msghdr *message) {
-    response->payload = (payload_t*)message->msg_iov[0].iov_base;
+static void collect_data(recv_t *response, struct msghdr *message, int is_raw) {
+    if (is_raw) {
+        response->payload = (payload_t*)(message->msg_iov[0].iov_base + IP_HDR_LEN);
+    } else {
+        response->payload = (payload_t*)message->msg_iov[0].iov_base;
+    }
+
     for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(message); cmsg != NULL; cmsg = CMSG_NXTHDR(message, cmsg)) {
         if (cmsg->cmsg_level == SOL_IP) {
             if (cmsg->cmsg_type == IP_TTL) {
@@ -22,7 +27,7 @@ void reciever(ft_ping_t *ft_ping) {
     iov.iov_base = iov_base;
     iov.iov_len = IOV_LEN;
 
-    message.msg_name = ft_ping->addr;
+    message.msg_name = &ft_ping->addr;
     message.msg_namelen = ft_ping->addrlen;
     message.msg_iov = &iov;
     message.msg_iovlen = 1;
@@ -39,7 +44,7 @@ void reciever(ft_ping_t *ft_ping) {
 
             if (ft_ping->opts.quiet != 1) {
                 rec = recvmsg(ft_ping->sock, &message, MSG_ERRQUEUE);
-                collect_data(&response, &message);
+                collect_data(&response, &message, ft_ping->opts.is_raw);
                 char *err;
 
                 if (response.err->ee_type == ICMP_DEST_UNREACH) {
@@ -70,11 +75,14 @@ void reciever(ft_ping_t *ft_ping) {
             ft_ping->packets_recv++;
 
             if (ft_ping->opts.quiet != 1) {
-                collect_data(&response, &message);
+                collect_data(&response, &message, ft_ping->opts.is_raw);
                 gettimeofday(&now, NULL);
                 float elapsed = (float)(now.tv_usec - response.payload->time.tv_usec) / 1000;
                 if (ft_ping->opts.timestamp) {
                     printf("[%lu.%lu] ", now.tv_sec, now.tv_usec);
+                }
+                if (ft_ping->opts.is_raw) {
+                    rec -= IP_HDR_LEN;
                 }
                 printf("%lu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
                         rec,

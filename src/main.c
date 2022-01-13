@@ -1,7 +1,10 @@
 #include "ft_ping.h"
+#include <netdb.h>
+#include <netinet/in.h>
 #include <sys/time.h>
 
 ft_ping_t ft_ping;
+
 
 void send_ping(int sig) {
     payload_t request;
@@ -12,8 +15,21 @@ void send_ping(int sig) {
     memset(&request, 0, sizeof(request));
     request.icmp.type = ICMP_ECHO;
     request.icmp.un.echo.sequence = ft_ping.seq;
+    request.icmp.checksum = checksum(&request, sizeof(request));
     gettimeofday(&request.time, NULL);
-    if (sendto(ft_ping.sock, &request, sizeof(request), 0, ft_ping.addr, ft_ping.addrlen) < 0) {
+
+    if (ft_ping.opts.is_raw) {
+        payload_raw_t request_raw;
+        request_raw.data = request;
+        request_raw.ip = build_ip(sizeof(request_raw), ft_ping.opts.ttl, ft_ping.addr.sin_addr.s_addr);
+
+        if (sendto(ft_ping.sock, &request_raw, sizeof(request_raw), 0, (struct sockaddr *)&ft_ping.addr, ft_ping.addrlen) < 0) {
+            perror(PROG_NAME": sendto");
+            exit(1);
+        }
+    }
+
+    if (sendto(ft_ping.sock, &request, sizeof(request), 0, (struct sockaddr *)&ft_ping.addr, ft_ping.addrlen) < 0) {
         perror(PROG_NAME": sendto");
         exit(1);
     }
@@ -25,7 +41,6 @@ void send_ping(int sig) {
         struct itimerval interval = {0};
         interval.it_value = ft_ping.opts.interval;
         setitimer(0, &interval, 0);
-        /*alarm(1);*/
     }
 }
 
@@ -69,18 +84,25 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    ft_ping.addr = addr->ai_addr;
+    ft_ping.addr.sin_addr.s_addr = ((struct sockaddr_in *)addr->ai_addr)->sin_addr.s_addr;
+    ft_ping.addr.sin_port = 0;
+    ft_ping.addr.sin_family = AF_INET;
     ft_ping.addrlen = addr->ai_addrlen;
     sprintf(ft_ping.name, "%hhu.%hhu.%hhu.%hhu",
             addr->ai_addr->sa_data[2],
             addr->ai_addr->sa_data[3],
             addr->ai_addr->sa_data[4],
             addr->ai_addr->sa_data[5]);
+    freeaddrinfo(addr);
 
     ft_ping.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (ft_ping.sock < 0) {
-        perror(PROG_NAME": cannot create socket");
-        exit(1);
+        ft_ping.sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+        if (ft_ping.sock < 0) {
+            perror(PROG_NAME": cannot create socket");
+            exit(1);
+        }
+        ft_ping.opts.is_raw = 1;
     }
 
     int enable = 1;
@@ -88,10 +110,6 @@ int main(int argc, char **argv) {
         perror(PROG_NAME": cannot set error recieving");
         exit(1);
     }
-    /*if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVOPTS, &enable, sizeof(enable))) {*/
-        /*perror(PROG_NAME": setsockopt");*/
-        /*exit(1);*/
-    /*}*/
     if (setsockopt(ft_ping.sock, SOL_IP, IP_RECVTTL, &enable, sizeof(enable))) {
         perror(PROG_NAME": cannot set TTL recieving");
         exit(1);

@@ -2,6 +2,7 @@
 #define FT_PING
 
 #include <ctype.h>
+#include <netinet/ip.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,7 @@
 
 #define IOV_LEN 192
 #define CONTROL_LEN 256
+#define IP_HDR_LEN 20
 
 #define DEFAULT_TTL 64
 #define DEFAULT_INTERVAL 1.0
@@ -39,11 +41,12 @@ typedef struct {
     int quiet;
     int ttl;
     int verbose;
+    int is_raw;
 } opts_t;
 
 typedef struct {
     char name[16];
-    struct sockaddr *addr;
+    struct sockaddr_in addr;
     socklen_t addrlen;
     int sock;
     uint16_t seq;
@@ -61,6 +64,11 @@ typedef struct {
 } payload_t;
 
 typedef struct {
+    struct iphdr ip;
+    payload_t data;
+} payload_raw_t;
+
+typedef struct {
     payload_t *payload;
     int ttl;
     struct sock_extended_err *err;
@@ -69,5 +77,8 @@ typedef struct {
 void reciever(ft_ping_t *);
 int parse_opts(char **, opts_t *);
 void terminate(int);
+
+uint16_t checksum(void *, size_t);
+struct iphdr build_ip(size_t, int, in_addr_t);
 
 #endif
