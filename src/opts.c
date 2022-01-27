@@ -109,6 +109,9 @@ int parse_opts(char **argv, opts_t *opts) {
                     case 'v':
                         opts->verbose = 1;
                         break;
+                    default:
+                        fprintf(stderr, PROG_NAME": unknown options: %c\n", *s);
+                        return -1;
                 }
             }
         } else {
