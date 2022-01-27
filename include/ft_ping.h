@@ -35,6 +35,10 @@
                 "    -q      quiet mode, display only starting line and summary\n" \
                 "    -t N    set TTL. Default is 64\n" \
                 "    -v      verbose mode\n"
+#define HEADER_FORMAT \
+    "+-------------------------+\n" \
+    "|  Type: %02x  |  Code: %02x  |\n" \
+    "+-------------------------+\n"
 
 typedef struct {
     int count;

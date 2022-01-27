@@ -6,7 +6,6 @@ static void collect_data(recv_t *response, struct msghdr *message, int is_raw) {
     } else {
         response->payload = (payload_t*)message->msg_iov[0].iov_base;
     }
-
     for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(message); cmsg != NULL; cmsg = CMSG_NXTHDR(message, cmsg)) {
         if (cmsg->cmsg_level == SOL_IP) {
             if (cmsg->cmsg_type == IP_TTL) {
@@ -108,6 +107,9 @@ void reciever(ft_ping_t *ft_ping) {
                         (addr.sin_addr.s_addr >> 16) & 0xff,
                         (addr.sin_addr.s_addr >> 24) & 0xff,
                         response.payload->icmp.un.echo.sequence, err);
+                if (ft_ping->opts.verbose) {
+                    printf("I dunno, have a header\n"HEADER_FORMAT, response.err->ee_type, response.err->ee_code);
+                }
             }
         } else {
             ft_ping->packets_recv++;
