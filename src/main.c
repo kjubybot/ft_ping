@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     if (getaddrinfo(argv[1], NULL, &hints, &addr)) {
-        perror(PROG_NAME);
+        fprintf(stderr, PROG_NAME": cannot find host %s\n", argv[1]);
         exit(1);
     }
 

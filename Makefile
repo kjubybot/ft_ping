@@ -1,7 +1,7 @@
 NAME = ft_ping
 
 CC = gcc
-CFLAGS = -Iinclude/ -MMD -g -fsanitize=address
+CFLAGS = -Iinclude/ -MMD
 
 RM = rm -fr
 
