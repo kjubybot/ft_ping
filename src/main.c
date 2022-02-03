@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 ft_ping_t ft_ping;
 
@@ -46,9 +47,9 @@ void send_ping(int sig) {
 void terminate(int sig) {
     struct timeval now;
     gettimeofday(&now, NULL);
-    size_t elapsed = (now.tv_usec - ft_ping.start_time.tv_usec) / 1000;
+    size_t elapsed = (now.tv_sec - ft_ping.start_time.tv_sec) * 1000 + (now.tv_usec - ft_ping.start_time.tv_usec) / 1000;
     printf("\n0o0 %s ping statistics 0o0\n", ft_ping.name);
-    printf("%d packets transmitted, %d recieved, %d errors, %d%% packet loss, time %lu ms\n",
+    printf("%d packets transmitted, %d recieved, %d errors, %d%% packet loss, time %lums\n",
             ft_ping.packets,
             ft_ping.packets_recv,
             ft_ping.packets_lost,
@@ -136,6 +137,7 @@ int main(int argc, char **argv) {
 
     printf("FT_PING %s (%s) %lu bytes of data\n", argv[1], ft_ping.name, sizeof(payload_t));
 
+    gettimeofday(&ft_ping.start_time, 0);
     send_ping(0);
     reciever(&ft_ping);
 }

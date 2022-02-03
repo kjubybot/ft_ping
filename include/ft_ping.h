@@ -74,6 +74,7 @@ typedef struct {
     payload_t *payload;
     int ttl;
     struct sock_extended_err *err;
+    struct sockaddr_in *offender;
 } recv_t;
 
 void reciever(ft_ping_t *);

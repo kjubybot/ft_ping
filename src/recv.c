@@ -12,6 +12,7 @@ static void collect_data(recv_t *response, struct msghdr *message, int is_raw) {
                 response->ttl = *(int*)CMSG_DATA(cmsg);
             } else if (cmsg->cmsg_type == IP_RECVERR) {
                 response->err = (struct sock_extended_err*)CMSG_DATA(cmsg);
+                response->offender = (struct sockaddr_in *)SO_EE_OFFENDER(response->err);
             }
         }
     }
@@ -41,13 +42,6 @@ void reciever(ft_ping_t *ft_ping) {
 
         ssize_t rec = recvmsg(ft_ping->sock, &message, 0);
         if (addr.sin_addr.s_addr != ft_ping->addr.sin_addr.s_addr) {
-            if (ft_ping->opts.verbose) {
-                printf("Packet stopped at %d.%d.%d.%d\n",
-                        addr.sin_addr.s_addr & 0xff,
-                        (addr.sin_addr.s_addr >> 8) & 0xff,
-                        (addr.sin_addr.s_addr >> 16) & 0xff,
-                        (addr.sin_addr.s_addr >> 24) & 0xff);
-            }
             continue;
         }
         if (rec < 0)  {
@@ -101,11 +95,12 @@ void reciever(ft_ping_t *ft_ping) {
                             break;
                     }
                 }
+
                 printf("From %d.%d.%d.%d: icmp_seq=%d %s\n",
-                        addr.sin_addr.s_addr & 0xff,
-                        (addr.sin_addr.s_addr >> 8) & 0xff,
-                        (addr.sin_addr.s_addr >> 16) & 0xff,
-                        (addr.sin_addr.s_addr >> 24) & 0xff,
+                        response.offender->sin_addr.s_addr & 0xff,
+                        (response.offender->sin_addr.s_addr >> 8) & 0xff,
+                        (response.offender->sin_addr.s_addr >> 16) & 0xff,
+                        (response.offender->sin_addr.s_addr >> 24) & 0xff,
                         response.payload->icmp.un.echo.sequence, err);
                 if (ft_ping->opts.verbose) {
                     printf("I dunno, have a header\n"HEADER_FORMAT, response.err->ee_type, response.err->ee_code);
