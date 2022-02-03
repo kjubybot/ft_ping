@@ -57,6 +57,13 @@ void terminate(int sig) {
     exit(0);
 }
 
+void show_status(int sig) {
+    printf("\r%d/%d packets, %d%% loss\n",
+            ft_ping.packets_recv,
+            ft_ping.packets,
+            100 - (ft_ping.packets_recv * 100) / ft_ping.packets);
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         fputs(USAGE, stderr);
@@ -125,6 +132,7 @@ int main(int argc, char **argv) {
 
     signal(SIGALRM, send_ping);
     signal(SIGINT, terminate);
+    signal(SIGQUIT, show_status);
 
     printf("FT_PING %s (%s) %lu bytes of data\n", argv[1], ft_ping.name, sizeof(payload_t));
 
