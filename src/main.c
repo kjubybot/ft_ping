@@ -67,7 +67,7 @@ void show_status(int sig) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        fputs(USAGE, stderr);
+        fprintf(stderr, USAGE, argv[0]);
         exit(1);
     }
 
