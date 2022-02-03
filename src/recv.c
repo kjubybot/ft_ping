@@ -117,7 +117,7 @@ void reciever(ft_ping_t *ft_ping) {
             if (ft_ping->opts.quiet != 1) {
                 collect_data(&response, &message, ft_ping->opts.is_raw);
                 gettimeofday(&now, NULL);
-                float elapsed = (float)(now.tv_usec - response.payload->time.tv_usec) / 1000;
+                float elapsed = (now.tv_sec - response.payload->time.tv_sec) * 1000 + (float)(now.tv_usec - response.payload->time.tv_usec) / 1000;
                 if (ft_ping->opts.timestamp) {
                     printf("[%lu.%lu] ", now.tv_sec, now.tv_usec);
                 }
