@@ -26,7 +26,7 @@
 
 #define PROG_NAME "ft_ping"
 #define USAGE "Usage:\n" \
-                "ft_ping [options] address\n\n" \
+                "%s [options] address\n\n" \
                 "Valid options are:\n" \
                 "    -c N    send N packets and stop\n" \
                 "    -D      show timestamp\n" \

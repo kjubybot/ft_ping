@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     }
 
     if (ft_ping.opts.help) {
-        puts(USAGE);
+        printf(USAGE, argv[0]);
         exit(0);
     }
 
